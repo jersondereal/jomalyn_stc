@@ -1,5 +1,4 @@
 const db = require('../config/database');
-const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 // Login user
@@ -24,9 +23,8 @@ exports.login = async (req, res) => {
             }
 
             const user = results[0];
-            const validPassword = await bcrypt.compare(password, user.Password);
-
-            if (!validPassword) {
+            // Direct password comparison without bcrypt
+            if (password !== user.Password) {
                 console.log("Invalid password for user:", username);
                 return res.status(401).json({ message: 'Invalid username or password' });
             }
@@ -104,10 +102,10 @@ exports.signup = async (req, res) => {
 
     async function createUser() {
         try {
-            const hashedPassword = await bcrypt.hash(password, 10);
+            // Store password as plain text
             const query = 'INSERT INTO Users (Username, Email, Password, Role, RFID) VALUES (?, ?, ?, ?, ?)';
             
-            db.query(query, [username, email, hashedPassword, role, rfid || null], (err, result) => {
+            db.query(query, [username, email, password, role, rfid || null], (err, result) => {
                 if (err) {
                     console.error('Error creating user:', err);
                     return res.status(500).json({ message: 'Failed to create user' });
@@ -116,7 +114,7 @@ exports.signup = async (req, res) => {
                 res.status(201).json({ message: 'User created successfully' });
             });
         } catch (err) {
-            console.error('Error hashing password:', err);
+            console.error('Error creating user:', err);
             res.status(500).json({ message: 'Internal server error' });
         }
     }
