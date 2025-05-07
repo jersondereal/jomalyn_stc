@@ -156,8 +156,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify(formData)
             });
 
+            const data = await response.json();
+
             if (!response.ok) {
-                const data = await response.json();
                 showModalError(cashInModal, data.message || 'Failed to process cash-in');
                 return;
             }

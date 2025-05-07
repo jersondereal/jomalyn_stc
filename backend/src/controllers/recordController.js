@@ -3,13 +3,60 @@ const db = require('../config/database');
 // Cash-in operation
 exports.cashIn = (req, res) => {
   const { RFID, amount } = req.body;
-  const query = 'UPDATE Passenger SET CurrentBalance = CurrentBalance + ? WHERE RFID = ?';
-  db.query(query, [amount, RFID], (err, result) => {
-    if (err) return res.status(500).send(err);
-    const transactionQuery = 'INSERT INTO Transactions (RFID, TransactionType, Amount, RemainingBalance) VALUES (?, "Cash-in", ?, (SELECT CurrentBalance FROM Passenger WHERE RFID = ?))';
-    db.query(transactionQuery, [RFID, amount, RFID], (err, result) => {
-      if (err) return res.status(500).send(err);
-      res.status(200).send('Cash-in successful');
+
+  // Input validation
+  if (!RFID || !amount || isNaN(amount) || amount <= 0) {
+    return res.status(400).json({ message: 'Invalid RFID or amount' });
+  }
+
+  db.beginTransaction(err => {
+    if (err) {
+      console.error('Error starting transaction:', err);
+      return res.status(500).json({ message: 'Database error' });
+    }
+
+    // First check if passenger exists
+    const checkQuery = 'SELECT * FROM Passenger WHERE RFID = ?';
+    db.query(checkQuery, [RFID], (err, results) => {
+      if (err) {
+        console.error('Error checking passenger:', err);
+        db.rollback();
+        return res.status(500).json({ message: 'Database error' });
+      }
+
+      if (results.length === 0) {
+        db.rollback();
+        return res.status(404).json({ message: 'Passenger not found' });
+      }
+
+      // Update passenger balance
+      const updateQuery = 'UPDATE Passenger SET CurrentBalance = CurrentBalance + ? WHERE RFID = ?';
+      db.query(updateQuery, [amount, RFID], (err, result) => {
+        if (err) {
+          console.error('Error updating balance:', err);
+          db.rollback();
+          return res.status(500).json({ message: 'Database error' });
+        }
+
+        // Record the transaction
+        const transactionQuery = 'INSERT INTO Transactions (RFID, TransactionType, Amount, RemainingBalance) VALUES (?, "Cash-in", ?, (SELECT CurrentBalance FROM Passenger WHERE RFID = ?))';
+        db.query(transactionQuery, [RFID, amount, RFID], (err, result) => {
+          if (err) {
+            console.error('Error recording transaction:', err);
+            db.rollback();
+            return res.status(500).json({ message: 'Database error' });
+          }
+
+          db.commit(err => {
+            if (err) {
+              console.error('Error committing transaction:', err);
+              db.rollback();
+              return res.status(500).json({ message: 'Database error' });
+            }
+            res.status(200).json({ message: 'Cash-in successful' });
+          });
+        });
+      });
     });
   });
 };
