@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login - STC</title>
+    <link rel="stylesheet" href="assets/css/styles.css" />
+  </head>
+  <body>
+    <div class="auth-page">
+      <div class="auth-container">
+        <!-- Login Form -->
+        <div class="auth-form-container" id="login-container">
+          <div class="auth-header">
+            <h1>STC</h1>
+            <p>Welcome back! Please login to your account.</p>
+          </div>
+          <form id="login-form">
+            <div class="form-group">
+              <label for="username">Username</label>
+              <input
+                autocomplete="off"
+                type="text"
+                id="username"
+                name="username"
+                placeholder="Enter your username"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="password">Password</label>
+              <input
+                autocomplete="off"
+                type="password"
+                id="password"
+                name="password"
+                placeholder="Enter your password"
+                required
+              />
+            </div>
+            <button type="submit" class="btn-primary">Login</button>
+          </form>
+          <p class="auth-switch">
+            Don't have an account?
+            <button type="button" id="show-signup" class="btn-link">
+              Sign Up
+            </button>
+          </p>
+        </div>
+
+        <!-- Signup Form -->
+        <div
+          class="auth-form-container"
+          id="signup-container"
+          style="display: none"
+        >
+          <div class="auth-header">
+            <h1>STC</h1>
+            <p>Create a new account</p>
+          </div>
+          <form id="signup-form">
+            <div class="form-group">
+              <label for="signup-username">Username</label>
+              <input
+                autocomplete="off"
+                type="text"
+                id="signup-username"
+                name="username"
+                placeholder="Choose a username"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="signup-email">Email</label>
+              <input
+                autocomplete="off"
+                type="email"
+                id="signup-email"
+                name="email"
+                placeholder="Enter your email"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="signup-password">Password</label>
+              <input
+                autocomplete="off"
+                type="password"
+                id="signup-password"
+                name="password"
+                placeholder="Choose a password"
+                required
+              />
+              <small class="help-text"
+                >Password must be at least 8 characters long</small
+              >
+            </div>
+            <div class="form-group">
+              <label for="confirm-password">Confirm Password</label>
+              <input
+                autocomplete="off"
+                type="password"
+                id="confirm-password"
+                name="confirmPassword"
+                placeholder="Confirm your password"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="role">Role</label>
+              <select id="role" name="role" required>
+                <option value="">Select a role</option>
+                <option value="operator">Operator</option>
+                <option value="passenger">Passenger</option>
+              </select>
+            </div>
+            <button type="submit" class="btn-primary">Create Account</button>
+          </form>
+          <p class="auth-switch">
+            Already have an account?
+            <button type="button" id="show-login" class="btn-link">
+              Login
+            </button>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="assets/js/config.js"></script>
+    <script type="module" src="assets/js/auth.js"></script>
+  </body>
+</html>
