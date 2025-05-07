@@ -39,8 +39,8 @@ exports.cashIn = (req, res) => {
         }
 
         // Record the transaction
-        const transactionQuery = 'INSERT INTO Transactions (RFID, TransactionType, Amount, RemainingBalance) VALUES (?, "Cash-in", ?, (SELECT CurrentBalance FROM Passenger WHERE RFID = ?))';
-        db.query(transactionQuery, [RFID, amount, RFID], (err, result) => {
+        const transactionQuery = 'INSERT INTO Transactions (RFID, TransactionType, Amount, RemainingBalance) VALUES (?, ?, ?, (SELECT CurrentBalance FROM Passenger WHERE RFID = ?))';
+        db.query(transactionQuery, [RFID, 'Cash-in', amount, RFID], (err, result) => {
           if (err) {
             console.error('Error recording transaction:', err);
             db.rollback();
