@@ -64,13 +64,60 @@ exports.cashIn = (req, res) => {
 // Process travel payment
 exports.processTravel = (req, res) => {
   const { RFID, destination, fare } = req.body;
-  const query = 'UPDATE Passenger SET CurrentBalance = CurrentBalance - ? WHERE RFID = ? AND CurrentBalance >= ?';
-  db.query(query, [fare, RFID, fare], (err, result) => {
-    if (err || result.affectedRows === 0) return res.status(400).send('Insufficient balance or invalid RFID');
-    const transactionQuery = 'INSERT INTO Transactions (RFID, TransactionType, Amount, Destination, Fare, RemainingBalance) VALUES (?, "Payment", ?, ?, ?, (SELECT CurrentBalance FROM Passenger WHERE RFID = ?))';
-    db.query(transactionQuery, [RFID, fare, destination, fare, RFID], (err, result) => {
-      if (err) return res.status(500).send(err);
-      res.status(200).send('Travel payment processed successfully');
+
+  // Input validation
+  if (!RFID || !destination || !fare || isNaN(fare) || fare <= 0) {
+    return res.status(400).json({ message: 'Invalid RFID, destination, or fare' });
+  }
+
+  db.beginTransaction(err => {
+    if (err) {
+      console.error('Error starting transaction:', err);
+      return res.status(500).json({ message: 'Database error' });
+    }
+
+    // First check if passenger exists and has sufficient balance
+    const checkQuery = 'SELECT * FROM Passenger WHERE RFID = ? AND CurrentBalance >= ?';
+    db.query(checkQuery, [RFID, fare], (err, results) => {
+      if (err) {
+        console.error('Error checking passenger:', err);
+        db.rollback();
+        return res.status(500).json({ message: 'Database error' });
+      }
+
+      if (results.length === 0) {
+        db.rollback();
+        return res.status(400).json({ message: 'Insufficient balance or invalid RFID' });
+      }
+
+      // Update passenger balance
+      const updateQuery = 'UPDATE Passenger SET CurrentBalance = CurrentBalance - ? WHERE RFID = ?';
+      db.query(updateQuery, [fare, RFID], (err, result) => {
+        if (err) {
+          console.error('Error updating balance:', err);
+          db.rollback();
+          return res.status(500).json({ message: 'Database error' });
+        }
+
+        // Record the transaction
+        const transactionQuery = 'INSERT INTO Transactions (RFID, TransactionType, Amount, Destination, Fare, RemainingBalance) VALUES (?, ?, ?, ?, ?, (SELECT CurrentBalance FROM Passenger WHERE RFID = ?))';
+        db.query(transactionQuery, [RFID, 'Payment', fare, destination, fare, RFID], (err, result) => {
+          if (err) {
+            console.error('Error recording transaction:', err);
+            db.rollback();
+            return res.status(500).json({ message: 'Database error' });
+          }
+
+          db.commit(err => {
+            if (err) {
+              console.error('Error committing transaction:', err);
+              db.rollback();
+              return res.status(500).json({ message: 'Database error' });
+            }
+            res.status(200).json({ message: 'Travel payment processed successfully' });
+          });
+        });
+      });
     });
   });
 };
